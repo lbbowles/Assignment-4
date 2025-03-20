@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 
-//Look over this
+//https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/inheritance
 @Inheritance(strategy = InheritanceType.JOINED)
 
 @Table(name = "animals")
