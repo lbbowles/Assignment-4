@@ -1,17 +1,17 @@
 package com.csc340.Assignment4.animal;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+// Basically hand-held the instructions that were provided via Canvas.
 
 /**
  * AnimalController.java.
  * Includes all REST API endpoint mappings for the Animal object.
  */
-@RestController
+@Controller
 @RequestMapping("/animals")
 public class AnimalController {
 
@@ -21,87 +21,96 @@ public class AnimalController {
     /**
      * Get a list of all Animals in the database.
      * http://localhost:8080/animals/all
-     *
-     * @return a list of Animal objects.
      */
+
     @GetMapping("/all")
-    public ResponseEntity<List<Animal>> getAllAnimals() {
-        return new ResponseEntity<>(service.getAllAnimals(), HttpStatus.OK);
+    public String getAllAnimals(Model model) {
+        // return new ResponseEntity<>(service.getAllStudents(), HttpStatus.OK);
+        model.addAttribute("animalList", service.getAllAnimals());
+        //model.addAttribute("title", "All Animals");
+        return "animal-list";
     }
 
     /**
      * Get a specific Animal by Id.
      * http://localhost:8080/animals/{animalId}
      *
-     * @param animalId the unique Id for an Animal.
-     * @return One Animal object.
      */
+
     @GetMapping("/{animalId}")
-    public ResponseEntity<Animal> getOneAnimal(@PathVariable int animalId) {
-        return new ResponseEntity<>(service.getAnimalById(animalId), HttpStatus.OK);
-    }
+    public Object getOneAnimal(@PathVariable int animalId, Model model) {
+        // return new ResponseEntity<>(service.getStudentById(studentId), HttpStatus.OK);
+        model.addAttribute("animal", service.getAnimalById(animalId));
+        model.addAttribute("title", "Animal #: " + animalId);
+        return "animal-details";
 
-    /**
-     * Get a list of animals with a name that contains the given string.
-     * http://localhost:8080/animals/name?search=reyna
-     *
-     * @param search the search key
-     * @return list of Animal objects matching the search key.
-     */
-    @GetMapping("/name")
-    public ResponseEntity<List<Animal>> getAnimalsByName(@RequestParam(name = "search", defaultValue = "") String search) {
-        return new ResponseEntity<>(service.getAnimalsByName(search), HttpStatus.OK);
-    }
-
-    /**
-     * Get a list of Animals based on their breed.
-     * http://localhost:8080/animals/breed/{breed}
-     *
-     * @param breed the search key.
-     * @return A list of Animal objects matching the search key.
-     */
-    @GetMapping("/breed/{breed}")
-    public ResponseEntity<List<Animal>> getAnimalsByBreed(@PathVariable String breed) {
-        return new ResponseEntity<>(service.getAnimalsByBreed(breed), HttpStatus.OK);
     }
 
     /**
      * Create a new Animal entry.
-     * http://localhost:8080/animals/new --data '{  "name": "sample new animal", "breed": "dog" }'
-     *
-     * @param animal the new Animal object.
-     * @return the updated list of Animals.
      */
     @PostMapping("/new")
-    public ResponseEntity<List<Animal>> addNewAnimal(@RequestBody Animal animal) {
+    public String createAnimal(@RequestParam String type, @RequestParam String name, @RequestParam String description,
+                               @RequestParam String breed)
+
+    // Since Assignment 4, I made it so that there were three databases, complicates things and I therefore have to put this in to allow updates.
+    // Information from the create page is the stuff above, apply that to this post and post.
+    {
+        Animal animal;
+        if ("cat".equalsIgnoreCase(type)) {
+            animal = new Cat(name, description, breed);
+        } else {
+            animal = new Dog(name, description, breed);
+        }
+
         service.addNewAnimal(animal);
-        return new ResponseEntity<>(service.getAllAnimals(), HttpStatus.CREATED);
+        return "redirect:/animals/all";
+    }
+
+    @GetMapping("/new")
+    public String showCreateAnimalForm(Model model) {
+        model.addAttribute("animal", new Animal());
+        return "animal-create";
     }
 
     /**
      * Update an existing Animal object.
-     * http://localhost:8080/animals/update/{animalId} --data '{ "name": "sampleUpdated", "breed": "dog" }'
-     *
-     * @param animalId the unique Animal Id.
-     * @param animal   the updated Animal details.
-     * @return the updated Animal object.
      */
-    @PutMapping("/update/{animalId}")
-    public ResponseEntity<Animal> updateAnimal(@PathVariable int animalId, @RequestBody Animal animal) {
-        service.updateAnimal(animalId, animal);
-        return new ResponseEntity<>(service.getAnimalById(animalId), HttpStatus.OK);
+    @GetMapping("/update/{animalId}")
+    public String showUpdateAnimalForm(@PathVariable int animalId, Model model) {
+        Animal animal = service.getAnimalById(animalId);
+        model.addAttribute("animal", animal);
+        // Again because I made an extra table and animal is a superclass, have to pass this off.
+        model.addAttribute("type", animal instanceof Cat ? "Cat" : "Dog");
+        model.addAttribute("title", "Update Animal");
+        return "animal-update";
     }
+
+    @PostMapping("/update/{animalId}")
+    public String updateAnimal(@PathVariable int animalId, Animal formAnimal, @RequestParam String type) {
+        Animal updatedAnimal;
+
+        // Same logic as the one above, if it is a cat, then put as one, otherwise it is a dog.  Otherwise will get type error.
+        if ("Cat".equalsIgnoreCase(type)) {
+            updatedAnimal = new Cat(formAnimal.getName(), formAnimal.getDescription(), formAnimal.getBreed());
+        } else {
+            updatedAnimal = new Dog(formAnimal.getName(), formAnimal.getDescription(), formAnimal.getBreed());
+        }
+
+        service.updateAnimal(animalId, updatedAnimal);
+        return "redirect:/animals/" + animalId;
+    }
+
 
     /**
      * Delete an Animal object.
      * http://localhost:8080/animals/delete/{animalId}
      *
-     * @param animalId the unique Animal Id.
-     * @return the updated list of Animals.
      */
-    @DeleteMapping("/delete/{animalId}")
-    public ResponseEntity<List<Animal>> deleteAnimalById(@PathVariable int animalId) {
+    @GetMapping("/delete/{animalId}")
+    public String deleteAnimalById(@PathVariable int animalId) {
         service.deleteAnimalById(animalId);
-        return new ResponseEntity<>(service.getAllAnimals(), HttpStatus.OK);
+        return "redirect:/animals/all";
     }
+
 }

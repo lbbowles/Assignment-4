@@ -12,7 +12,7 @@ public class Cat extends Animal {
     }
 
     public Cat(String name, String description, String breed) {
-        super(name, description);
+        super(name, description, breed);
         this.setBreed(breed);
     }
 
