@@ -31,7 +31,7 @@ public class Animal {
         this.breed = breed;
     }
 
-    public Animal(String name, String description) {
+    public Animal(String name, String description, String breed) {
         this.name = name;
         this.description = description;
         this.breed = breed;

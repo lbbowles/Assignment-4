@@ -12,7 +12,7 @@ public class Dog extends Animal {
     }
 
     public Dog(String name, String description, String breed) {
-        super(name, description);
+        super(name, description, breed);
         this.setBreed(breed);
     }
 
